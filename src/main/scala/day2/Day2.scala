@@ -7,8 +7,7 @@ def input: Iterator[String] = Source.fromResource("day2.txt").getLines
 def part1: Int =
   var x = 0
   var y = 0
-  for line <- input do
-    val (dx, dy) = lineToDelta(line)
+  for (dx, dy) <- input.map(lineToDelta) do
     x += dx
     y += dy
   x * y
@@ -28,9 +27,18 @@ def part2: Int =
   var x = 0
   var y = 0
   var aim = 0
-  for line <- input do
-    val (dx, daim) = lineToDelta(line)
+  for (dx, daim) <- input.map(lineToDelta) do
     x += dx
     aim += daim
     y += aim * dx
   x * y
+
+def part2WithFold: Int =
+  val (xFinal, yFinal, _) = input
+    .map(lineToDelta)
+    .foldLeft((0, 0, 0))((acc, value) =>
+      (acc, value) match
+        case ((x, y, aim), (dx, daim)) =>
+          (x + dx, y + (aim + daim) * dx, aim + daim)
+    )
+  xFinal * yFinal
