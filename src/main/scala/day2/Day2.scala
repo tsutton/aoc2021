@@ -5,11 +5,9 @@ import scala.io.Source
 def input: Iterator[String] = Source.fromResource("day2.txt").getLines
 
 def part1: Int =
-  var x = 0
-  var y = 0
-  for (dx, dy) <- input.map(lineToDelta) do
-    x += dx
-    y += dy
+  val (x, y) = input
+    .map(lineToDelta)
+    .foldLeft((0, 0))((acc, deltas) => (acc(0) + deltas(0), acc(1) + deltas(1)))
   x * y
 
 // Returns the pair of (change to horizontal position, change to depth or aim) for a given line
