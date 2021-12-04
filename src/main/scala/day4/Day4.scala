@@ -1,7 +1,7 @@
 package day4
 
 import scala.io.Source
-import scala.collection.mutable.{ArrayBuffer, Seq => MSeq}
+import scala.collection.mutable.ArrayBuffer
 
 def input: Iterator[String] = Source.fromResource("day4.txt").getLines
 def exampleInput: Iterator[String] =
@@ -26,14 +26,14 @@ def exampleInput: Iterator[String] =
  2  0 12  3  7
 """.linesIterator
 
-val boardSize = 5
+final val boardSize = 5
 
 def parse: (Array[Int], ArrayBuffer[Board]) =
   val it = input
   val calls = it.next.split(',').map(_.toInt)
   val boards = ArrayBuffer[Board]()
   while it.hasNext do
-    it.next
+    it.next // skip blank line
     boards.addOne(Board.fromLines(it.take(boardSize).toList))
   (calls, boards)
 
@@ -43,8 +43,8 @@ def part1: Int =
     call <- calls
     board <- boards
   do
-    board.mark(call.toInt)
-    if board.is_bingo then return board.sum_of_unmarked * call.toInt
+    board.mark(call)
+    if board.is_bingo then return board.sum_of_unmarked * call
   ???
 
 def part2: Int =
@@ -55,23 +55,29 @@ def part2: Int =
     board <- boards
     if !board.is_bingo
   do
-    board.mark(call.toInt)
+    board.mark(call)
     if board.is_bingo then
       nBingos += 1
-      if nBingos == boards.size then return board.sum_of_unmarked * call.toInt
+      if nBingos == boards.size then return board.sum_of_unmarked * call
   ???
 
 class Board(grid: Seq[Seq[Int]]):
   val markedSquares: Array[Array[Boolean]] =
     Array.fill(boardSize, boardSize)(false)
+
   def mark(value: Int) =
     for (x, y) <- find(value) do markedSquares(x)(y) = true
+
+  // For large boards, you could imagine optimizing this by storing the values in
+  // a map of (value => (x,y)), but for our size board, brute force will do.
   def find(value: Int): Option[(Int, Int)] =
     for
       i <- 0 until boardSize
       j <- 0 until boardSize
-    do if grid(i)(j) == value then return Some((i, j))
+      if grid(i)(j) == value
+    do return Some((i, j))
     None
+
   def is_bingo: Boolean =
     for i <- 0 until boardSize do
       if (0 until boardSize).map(markedSquares(i)(_)).reduce(_ && _) then
@@ -79,13 +85,14 @@ class Board(grid: Seq[Seq[Int]]):
       if (0 until boardSize).map(markedSquares(_)(i)).reduce(_ && _) then
         return true
     false
+
   def sum_of_unmarked: Int =
-    val marked = for
+    val unmarked = for
       i <- 0 until boardSize
       j <- 0 until boardSize
       if !markedSquares(i)(j)
     yield grid(i)(j)
-    marked.sum
+    unmarked.sum
 
   override def toString: String =
     grid.map(_.mkString(" ")).mkString("\n") + "\n" + markedSquares
