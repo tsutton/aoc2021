@@ -66,7 +66,17 @@ class Board(grid: Seq[Seq[Int]]):
     Array.fill(boardSize, boardSize)(false)
 
   def mark(value: Int) =
+    // Not sure how I feel about using for statement for destructing Option
+    // It's more concise, but less clear than match
+    // See below for alternate
+    // I think using Option.for_each would be best, except for the inability to destructure
+    // the (x,y) tuple in the function argument :(
     for (x, y) <- find(value) do markedSquares(x)(y) = true
+
+  def mark2(value: Int) =
+    find(value) match
+      case Some((x, y)) => markedSquares(x)(y) = true
+      case None         => {}
 
   // For large boards, you could imagine optimizing this by storing the values in
   // a map of (value => (x,y)), but for our size board, brute force will do.
