@@ -3,7 +3,6 @@ package day11
 import scala.io.Source
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.LazyList
-import scala.compiletime.ops.boolean
 
 def input: Iterator[String] =
   Source.fromResource("day11.txt").getLines
@@ -91,6 +90,6 @@ object OctopusGrid:
   def parse(value: Iterator[String]): OctopusGrid =
     OctopusGrid(
       ArrayBuffer.from(
-        value.map(line => ArrayBuffer.from(line.map(_.toString.toInt)))
+        value.map(line => ArrayBuffer.from(line.map(_.asDigit)))
       )
     )
