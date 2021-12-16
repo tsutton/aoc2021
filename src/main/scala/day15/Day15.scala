@@ -107,8 +107,10 @@ def part2(): Int =
   bestDistances((5 * size - 1, 5 * size - 1))
 
 class MyPriorityQueue():
+  // this is really hacky, but it's still a big improvement on the above.
   val byPriority = TreeMap[Int, MSet[(Int, Int)]]()
   val priorities = MMap[(Int, Int), Int]()
+
   def add_with_priority(value: (Int, Int), priority: Int) =
     byPriority.updateWith(priority)(_ match
       case None => Some(MSet(value))
