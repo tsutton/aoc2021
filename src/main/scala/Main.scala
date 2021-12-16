@@ -1,2 +1,2 @@
 @main def hello: Unit =
-  println(day14.part2())
+  println(day15.part2Faster())
