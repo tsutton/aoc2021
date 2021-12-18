@@ -9,12 +9,8 @@ case class Pair(var left: Int | Pair, var right: Int | Pair):
     p
 
   def reduce(): Unit =
-    if explode() then
-      // println("exploded")
-      reduce()
-    else if split() then
-      // println("reduced")
-      reduce()
+    if explode() then reduce()
+    else if split() then reduce()
 
   def explode(): Boolean = explodeAtDepth(0)._1
 
