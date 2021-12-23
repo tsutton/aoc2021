@@ -127,6 +127,5 @@ def parseSparse(input: Iterator[String]): (Array[Bit], SparseGrid) =
 
 def part2(): Int =
   //  actually is slower with parse sparse :(
-  var (key, grid) = parse(input)
-  (1 to 50).foreach(_ => grid = grid.enhance(key))
-  grid.litSquareCount
+  val (key, grid) = parse(input)
+  (1 to 50).foldLeft(grid)((g, _) => g.enhance(key)).litSquareCount
