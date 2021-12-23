@@ -33,12 +33,20 @@ def part1(): Int =
 def part2(): Long =
   var (p1Position, p2Position) = parse(input)
   val solver = Part2Solver()
-  val (x, y) = solver.solve(0, p1Position, 0, p2Position, 1)
+  val (x, y) = solver.solve(Position(0, p1Position, 0, p2Position, 1))
   x.max(y)
+
+case class Position(
+    val p1Score: Int,
+    val p1Position: Int,
+    val p2Score: Int,
+    val p2Position: Int,
+    val turn: Int
+)
 
 class Part2Solver():
   // (p1 score, p1 position, p2 score, p2 position, player whose turn it is) => (p1 wins universes, p2 wins universes)
-  val universes: MMap[(Int, Int, Int, Int, Int), (Long, Long)] = MMap()
+  val universes: MMap[Position, (Long, Long)] = MMap()
 
   val rollSumsToUniverses: Map[Int, Long] = Map(
     3 -> 1L,
@@ -51,23 +59,21 @@ class Part2Solver():
   )
 
   def solve(
-      p1Score: Int,
-      p1Position: Int,
-      p2Score: Int,
-      p2Position: Int,
-      turn: Int
+      position: Position
   ): (Long, Long) =
-    if universes.contains((p1Score, p1Position, p2Score, p2Position, turn)) then
-      return universes((p1Score, p1Position, p2Score, p2Position, turn))
+    if universes.contains(position) then return universes(position)
     val sol =
-      if turn == 1 then
+      if position.turn == 1 then
         rollSumsToUniverses.keysIterator
           .map(roll => {
             val universes = rollSumsToUniverses(roll)
-            val pos = newPosition(p1Position, roll)
-            if p1Score + pos >= 21 then (universes, 0L)
+            val pos = newPosition(position.p1Position, roll)
+            val newScore = position.p1Score + pos
+            if newScore >= 21 then (universes, 0L)
             else
-              val (x, y) = solve(p1Score + pos, pos, p2Score, p2Position, 2)
+              val (x, y) = solve(
+                position.copy(p1Position = pos, p1Score = newScore, turn = 2)
+              )
               (universes * x, universes * y)
           })
           .reduce((a, b) => (a._1 + b._1, a._2 + b._2))
@@ -75,14 +81,17 @@ class Part2Solver():
         rollSumsToUniverses.keysIterator
           .map(roll => {
             val universes = rollSumsToUniverses(roll)
-            val pos = newPosition(p2Position, roll)
-            if p2Score + pos >= 21 then (0L, universes)
+            val pos = newPosition(position.p2Position, roll)
+            val newScore = position.p2Score + pos
+            if newScore >= 21 then (0L, universes)
             else
-              val (x, y) = solve(p1Score, p1Position, p2Score + pos, pos, 1)
+              val (x, y) = solve(
+                position.copy(p2Position = pos, p2Score = newScore, turn = 1)
+              )
               (universes * x, universes * y)
           })
           .reduce((a, b) => (a._1 + b._1, a._2 + b._2))
-    universes((p1Score, p1Position, p2Score, p2Position, turn)) = sol
+    universes(position) = sol
     sol
 
 def newPosition(currentPosition: Int, roll: Int): Int =
