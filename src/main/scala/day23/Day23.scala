@@ -1,5 +1,6 @@
 package day23
 
+import scala.collection.mutable.{Map => MMap}
 // amphipods 0 and 1 are A, 2 and 3 are B, 4 and 5 are C, 6 and 7 are D
 case class Burrow(val amphipods: List[Position]):
 
@@ -28,13 +29,12 @@ case class Burrow(val amphipods: List[Position]):
         if lookup(Position.Room(targetRoom, 0)).isEmpty then
           return List(Position.Room(targetRoom, 0))
         else if (
-            lookup(Position.Room(targetRoom, 0))
-              .map(_ / 2 == targetRoom)
-              .getOrElse(false)
-            &&
-            lookup(Position.Room(targetRoom, 1)).isEmpty
-          )
-        then return List(Position.Room(targetRoom, 1))
+          lookup(Position.Room(targetRoom, 0))
+            .map(_ / 2 == targetRoom)
+            .getOrElse(false)
+          &&
+          lookup(Position.Room(targetRoom, 1)).isEmpty
+        ) then return List(Position.Room(targetRoom, 1))
 
       (minHallwayPos to maxHallwayPos)
         .filter(!List(2, 4, 6, 8).contains(_))
@@ -51,16 +51,14 @@ case class Burrow(val amphipods: List[Position]):
         if lookup(Position.Room(targetRoom, 0)).isEmpty then
           return List(Position.Room(targetRoom, 0))
         else if (
-            lookup(Position.Room(targetRoom, 0))
-              .map(_ / 2 == targetRoom)
-              .getOrElse(false)
-            &&
-            lookup(Position.Room(targetRoom, 1)).isEmpty
-          )
-        then return List(Position.Room(targetRoom, 1))
+          lookup(Position.Room(targetRoom, 0))
+            .map(_ / 2 == targetRoom)
+            .getOrElse(false)
+          &&
+          lookup(Position.Room(targetRoom, 1)).isEmpty
+        ) then return List(Position.Room(targetRoom, 1))
 
       List()
-
     }
 
   def availableHallwayRange(current: Int): (Int, Int) =
@@ -101,6 +99,8 @@ case class Burrow(val amphipods: List[Position]):
       .minOption
 
   def minimumEnergyToSolveWithFirstMover(amphipodToMove: Int): Option[Int] =
+    if Burrow.cache.contains((this, amphipodToMove)) then
+      return Burrow.cache((this, amphipodToMove))
     if isSolved then return Some(0)
     val moves = availableMovesForAmphipod(amphipodToMove)
     val possibles: List[Option[Int]] = for
@@ -113,14 +113,19 @@ case class Burrow(val amphipods: List[Position]):
       withMove(amphipodToMove, move)
         .minimumEnergyToSolveWithFirstMover(nextAmphipod)
         .map(_ + energyForThisMove)
-    possibles
+    val answer = possibles
       .collect({ case Some(i) =>
         i
       })
       .minOption
+    Burrow.cache((this, amphipodToMove)) = answer
+    answer
 
   def withMove(amphipod: Int, position: Position): Burrow =
     Burrow(amphipods.updated(amphipod, position))
+
+object Burrow:
+  val cache: MMap[(Burrow, Int), Option[Int]] = MMap()
 
 enum Position:
   def distanceTo(other: Position): Int = (this, other) match
