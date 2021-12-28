@@ -1,5 +1,7 @@
 package day19
 
+import scala.io.Source
+
 import scala.collection.mutable.{ArrayBuffer, Set => MSet}
 
 class Grid(val points: ArrayBuffer[Point] = ArrayBuffer[Point]()):
@@ -11,14 +13,18 @@ class Grid(val points: ArrayBuffer[Point] = ArrayBuffer[Point]()):
     * gives this, or None, if they don't match
     */
   def matches(other: Grid): Option[(Int, Int, Int)] =
-    val referencePt = points.head
-    for point <- other.points do
+    for
+      // if they have 12 matching points, we can remove 11 points from each and
+      // it'll still match
+      referencePt <- points.slice(0, points.size - 12)
+      point <- other.points.slice(0, other.points.size - 12)
+    do
       val shift = referencePt - point
       val overlap = (other
         .shift(shift.toTuple)
         .points
         .toSet & points.toSet)
-      assert(overlap.contains(referencePt))
+      // assert(overlap.contains(referencePt))
       if overlap.size >= 12 then return Some(shift.toTuple)
     None
 
@@ -222,6 +228,8 @@ def exampleInput: Iterator[String] = """--- scanner 0 ---
 30,-46,-14
 """.linesIterator
 
+def input: Iterator[String] = Source.fromResource("day19.txt").getLines
+
 def parse(input: Iterator[String]): ArrayBuffer[Grid] =
   val result = ArrayBuffer[Grid]()
   val buffered = input.buffered
@@ -236,36 +244,35 @@ def parse(input: Iterator[String]): ArrayBuffer[Grid] =
     if buffered.hasNext then buffered.next // skip blank line
   result
 
-val grids = parse(exampleInput)
+val grids = parse(input)
 
 def part1(): Int =
   // println(grids.mkString("\n"))
-  val unvisitedLocked = MSet(1)
+  val unvisitedLocked = MSet(0)
   val visited = MSet[Int]()
-  // val unvisited = MSet.from[Int](1 until grids.length)
-  val unvisited = MSet(0, 2, 3, 4)
+  val unvisited = MSet.from[Int](1 until grids.length)
+  // val unvisited = MSet(0, 2, 3, 4)
   while visited.size != grids.size do
-    println(
-      s"top of loop, with visited=${visited} and unvisited=${unvisited} and unvisitedLocked=${unvisitedLocked}"
-    )
+    // println(
+    //   s"top of loop, with visited=${visited} and unvisited=${unvisited} and unvisitedLocked=${unvisitedLocked}"
+    // )
     val referenceGridIdx = unvisitedLocked.head
-    println(s"visiting ${referenceGridIdx}")
+    // println(s"visiting ${referenceGridIdx}")
     // println(s"has grid ${grids(referenceGridIdx)}")
     unvisitedLocked.remove(referenceGridIdx)
     visited.add(referenceGridIdx)
     val referenceGrid = grids(referenceGridIdx)
-    // TODO grid(1) is supposed match grid(4) but it doesn't
     for (grid, i) <- unvisited.map(i => (grids(i), i)) do
-      println(s"trying ${i}")
+      // println(s"trying ${i}")
       tryMatch(referenceGrid, grid) match
         case None => {}
         case Some(shift, o) => {
-          println(s"found match ${i} with orientation ${o} and shift ${shift}")
+          // println(s"found match ${i} with orientation ${o} and shift ${shift}")
           grids(i) = grid.inOrientation(o).shift(shift)
           // println(s"post-change grid ${grids(i)}")
           unvisitedLocked.add(i)
           unvisited.remove(i)
-          assert(grids(referenceGridIdx).matches(grids(i)) == Some((0, 0, 0)))
+          // assert(grids(referenceGridIdx).matches(grids(i)) == Some((0, 0, 0)))
         }
 
   val allPts = MSet[Point]()
@@ -274,6 +281,36 @@ def part1(): Int =
     pt <- grid.points
   do allPts.add(pt)
   allPts.size
+
+def part2(): Int =
+  val unvisitedLocked = MSet(0)
+  val visited = MSet[Int]()
+  val unvisited = MSet.from[Int](1 until grids.length)
+  val scannerLocations = MSet[(Int, Int, Int)]((0, 0, 0))
+  while visited.size != grids.size do
+    val referenceGridIdx = unvisitedLocked.head
+    unvisitedLocked.remove(referenceGridIdx)
+    visited.add(referenceGridIdx)
+    val referenceGrid = grids(referenceGridIdx)
+    for (grid, i) <- unvisited.map(i => (grids(i), i)) do
+      tryMatch(referenceGrid, grid) match
+        case None => {}
+        case Some(shift, o) => {
+          grids(i) = grid.inOrientation(o).shift(shift)
+          unvisitedLocked.add(i)
+          unvisited.remove(i)
+          scannerLocations.add(shift)
+        }
+  val locationsList = scannerLocations.toList
+  val dists = for
+    i <- 0 until locationsList.size
+    j <- 0 until locationsList.size
+    if i != j
+  yield (locationsList(i)._1 - locationsList(j)._1).abs +
+    (locationsList(i)._2 - locationsList(j)._2).abs +
+    (locationsList(i)._3 - locationsList(j)._3).abs
+
+  dists.max
 
 def tryMatch(
     baseGrid: Grid,
